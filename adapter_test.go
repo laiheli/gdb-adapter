@@ -15,13 +15,12 @@
 package gdbadapter
 
 import (
-	"log"
-	"testing"
-
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/util"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"log"
+	"testing"
 )
 
 func testGetPolicy(t *testing.T, e *casbin.Enforcer, res [][]string) {
