@@ -15,10 +15,12 @@
 package gdbadapter
 
 import (
+	"errors"
 	"fmt"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/gogf/gf/database/gdb"
+	"github.com/gogf/gf/frame/g"
 	"runtime"
 )
 
@@ -34,10 +36,8 @@ type CasbinRule struct {
 
 // Adapter represents the gdb adapter for policy storage.
 type Adapter struct {
-	driverName     string
-	dataSourceName string
-	tableName      string
-	db             gdb.DB
+	tableName string
+	db        gdb.DB
 }
 
 // finalizer is the destructor for Adapter.
@@ -48,11 +48,8 @@ func finalizer(a *Adapter) {
 }
 
 // NewAdapter is the constructor for Adapter.
-func NewAdapter(driverName string, dataSourceName string) (*Adapter, error) {
-	a := &Adapter{}
-	a.driverName = driverName
-	a.dataSourceName = dataSourceName
-	a.tableName = "casbin_rule"
+func NewAdapter(tableName string) (*Adapter, error) {
+	a := &Adapter{tableName: tableName}
 
 	// Open the DB, create it if not existed.
 	err := a.open()
@@ -68,9 +65,8 @@ func NewAdapter(driverName string, dataSourceName string) (*Adapter, error) {
 
 // NewAdapterFromOptions is the constructor for Adapter with existed connection
 func NewAdapterFromOptions(adapter *Adapter) (*Adapter, error) {
-
 	if adapter.tableName == "" {
-		adapter.tableName = "casbin_rule"
+		return nil, errors.New(`table not found`)
 	}
 	if adapter.db == nil {
 		err := adapter.open()
@@ -84,26 +80,7 @@ func NewAdapterFromOptions(adapter *Adapter) (*Adapter, error) {
 }
 
 func (a *Adapter) open() error {
-	var err error
-	var db gdb.DB
-
-	gdb.SetConfig(gdb.Config{
-		"casbin": gdb.ConfigGroup{
-			gdb.ConfigNode{
-				Type:     a.driverName,
-				LinkInfo: a.dataSourceName,
-				Role:     "master",
-				Weight:   100,
-			},
-		},
-	})
-	db, err = gdb.New("casbin")
-
-	if err != nil {
-		return err
-	}
-
-	a.db = db
+	a.db = g.DB()
 
 	return a.createTable()
 }
